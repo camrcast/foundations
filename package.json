@@ -21,5 +21,8 @@
     "@aws-sdk/lib-dynamodb": "^3.651.1",
     "uuid": "^10.0.0",
     "winston": "^3.14.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
