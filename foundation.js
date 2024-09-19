@@ -17,4 +17,5 @@ async function login(username, password){
 async function processTickets(user){
     let ticket = {desc: "Broken", by: user.username, status: "Pending"};
     sendTicket(ticket);
+    console.log(scanTickets(user));
 }

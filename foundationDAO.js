@@ -42,8 +42,9 @@ async function sendTicket(ticket){
 }
 
 async function scanTickets(user){
+    let command = "";
     if (user.role === "Employee"){
-        const command = new ScanCommand({
+        command = new ScanCommand({
             ticketTable,
             FilterExpression: "#by = :by",
             ExpressionAttributeNames: {
@@ -55,7 +56,7 @@ async function scanTickets(user){
         })
     }
     else{
-        const command = new ScanCommand({
+        command = new ScanCommand({
             ticketTable,
             FilterExpression: "#status = :status",
             ExpressionAttributeNames: {
