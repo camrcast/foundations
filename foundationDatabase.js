@@ -35,38 +35,22 @@ async function sendTicket(ticket){
     try{
         const data = await documentClient.send(command);
         console.log(data);
-        return;
     }catch(err){
         console.error(err);
     }
 }
 
-async function scanTickets(user){
-    let command = "";
-    if (user.role === "Employee"){
-        command = new ScanCommand({
-            ticketTable,
-            FilterExpression: "#by = :by",
-            ExpressionAttributeNames: {
-                "#by": "by"
-            },
-            ExpressionAttributeValues: {
-                ":by": {S: user.username}
-            }
-        })
-    }
-    else{
-        command = new ScanCommand({
-            ticketTable,
-            FilterExpression: "#status = :status",
-            ExpressionAttributeNames: {
-                "#status": "status"
-            },
-            ExpressionAttributeValues: {
-                ":status": {S: "Pending"}
-            }
-        })
-    }
+async function scanTickets(username){
+    const command = new ScanCommand({
+        ticketTable,
+        FilterExpression: "#by = :by",
+        ExpressionAttributeNames: {
+            "#by": "by"
+        },
+        ExpressionAttributeValues: {
+            ":by": {S: username}
+        }
+    })
     try{
         const data = await documentClient.send(command);
         return data.Items;
@@ -75,37 +59,48 @@ async function scanTickets(user){
     }
 }
 
-async function checkUser(user){
-    if (!user.name || !user.password){
-        console.log("Invalid username or password");
-        return;
+async function scanPendingTickets(){
+    command = new ScanCommand({
+        ticketTable,
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":status": {S: "Pending"}
+        }
+    })
+    try{
+        const data = await documentClient.send(command);
+        return data.Items;
+    }catch(err){
+        console.error(err);
     }
+}
+
+async function registerUser(user){
     const command = new PutCommand({
         userTable,
         user
     });
     try{
-        let u = queryUser(user.name);
-        if (u){
-            if (u.password === user.password){
-                console.log(`Logged in as ${u.username}`);
-                return u;
-            }
-            console.log(`Incorrect password for ${u.username}`)
-            return;
+        if (queryUser(user.username)){
+            return false;
         }
         const data = await documentClient.send(command);
         console.log(data);
-        return user;
+        return true;
     }
     catch(err){
         console.error(err);
+        return false;
     }
 }
 
 module.exports = {
-    checkUser,
+    registerUser,
     queryUser,
     scanTickets,
-    sendTicket
+    sendTicket,
+    scanPendingTickets
 }
