@@ -1,111 +1,109 @@
-const { DynamoDBClient, QueryCommand, ScanCommand} = require("@aws-sdk/client-dynamodb");
-const {
-    DynamoDBDocumentClient,
-    PutCommand
-} = require("@aws-sdk/lib-dynamodb")
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const fs = require('fs');
 
-const client = new DynamoDBClient({region: "us-west-1"});
+const app = express();
+const PORT = 3000;
 
-const documentClient = DynamoDBDocumentClient.from(client);
+app.use(express.json());
 
-const userTable = "foundationUsers";
-const ticketTable = "foundationTickets";
+// secret key for JWT signing (make sure to make this more secure in some way)
+let secretKey = "";
+fs.readFile('key.txt', (data) => {
+    key = data.toString();
+});
 
-async function queryUser(username){
-    const command = new QueryCommand({
-        userTable,
-        KeyConditionExpression: "#username = :username",
-        ExpressionAttributeNames: { "#username": "username"},
-        ExpressionAttributeValues: { ":username": {S: username}}
-    });
-    try{
-        const data = await documentClient.send(command);
-        return data.Items[0];
-    }catch(err){
-        console.error(err);
-        return false;
-    }
-}
+app.post("/register", async (req, res) => {
+    let {username, password} = req.body;
 
-async function sendTicket(ticket){
-    const command = new PutCommand({
-        ticketTable,
-        ticket
-    });
-    try{
-        const data = await documentClient.send(command);
-        console.log(data);
-        return;
-    }catch(err){
-        console.error(err);
-    }
-}
+    const saltRounds = 10;
 
-async function scanTickets(user){
-    let command = "";
-    if (user.role === "Employee"){
-        command = new ScanCommand({
-            ticketTable,
-            FilterExpression: "#by = :by",
-            ExpressionAttributeNames: {
-                "#by": "by"
+    password = await bcrypt.hash(password, saltRounds);
+    console.log(password);
+
+    const newUser = { id: users.length + 1, username, password, role};
+
+    res.status(201).json({message: "User successfully registered"});
+});
+
+
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    // find the user in the database
+    const user = users.find((user) => user.username === username);
+    
+    if (!user || !(await bcrypt.compare(password, user.password))){
+        res.status(401).json({message: "Invalid Credentials"});
+    }else{
+        // generate the JWT token
+
+        const token = jwt.sign(
+            {
+                id: user.id,
+                username: user.username,
+                role: user.role
             },
-            ExpressionAttributeValues: {
-                ":by": {S: user.username}
+            secretKey,
+            {
+                expiresIn: "15m", // token expiration time (adjust as needed)
             }
-        })
+        );
+
+        res.json({token});
     }
-    else{
-        command = new ScanCommand({
-            ticketTable,
-            FilterExpression: "#status = :status",
-            ExpressionAttributeNames: {
-                "#status": "status"
-            },
-            ExpressionAttributeValues: {
-                ":status": {S: "Pending"}
-            }
-        })
-    }
-    try{
-        const data = await documentClient.send(command);
-        return data.Items;
-    }catch(err){
-        console.error(err);
+});
+
+app.get("/protected", authenticateToken, (req, res) => {
+    res.json({message : "Protected Route Accessed", user: req.user});
+});
+
+app.get("/admin-protected", authenticateAdminToken, (req, res) => {
+    res.json({message : "Protected Admin Route Accessed", user: req.user});
+});
+
+async function authenticateToken(req, res, next){
+    // authorization: "Bearer tokenstring"
+
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token){
+        res.status(401).json({message: "Unauthorized Access"});
+    }else{
+        const user = await decodeJWT(token);
+        req.user = user;
+        next();
     }
 }
 
-async function checkUser(user){
-    if (!user.name || !user.password){
-        console.log("Invalid username or password");
-        return;
-    }
-    const command = new PutCommand({
-        userTable,
-        user
-    });
-    try{
-        let u = queryUser(user.name);
-        if (u){
-            if (u.password === user.password){
-                console.log(`Logged in as ${u.username}`);
-                return u;
-            }
-            console.log(`Incorrect password for ${u.username}`)
+async function authenticateAdminToken(req, res, next){
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token){
+        res.status(401).json({message: "Unauthorized Access"});
+    }else{
+        const user = await decodeJWT(token);
+        if (user.role !== "admin"){
+            res.status(403).json({message: "Forbidden Access"});
             return;
         }
-        const data = await documentClient.send(command);
-        console.log(data);
-        return user;
+        req.user = user;
+        next();
     }
-    catch(err){
+}
+
+async function decodeJWT(token){
+    try{
+        const user = await jwt.verify(token, secretKey)
+        return user;
+    }catch(err){
         console.error(err);
     }
 }
 
-module.exports = {
-    checkUser,
-    queryUser,
-    scanTickets,
-    sendTicket
-}
+app.listen(PORT, () => {
+    console.log("Server is listening on http://localhost:3000");
+})

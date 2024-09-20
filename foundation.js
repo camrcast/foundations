@@ -1,4 +1,4 @@
-const {checkUser, queryUser, scanTickets, sendTicket} = require('./foundationDAO');
+const {checkUser, queryUser, scanTickets, sendTicket} = require('./foundationDatabase');
 const uuid = require("uuid");
 
 async function login(username, password){

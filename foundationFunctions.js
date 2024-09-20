@@ -1,7 +1,7 @@
 const {
     readUserList,
     writeUserList
-} = require("./foundationDAO");
+} = require("./foundationDatabase");
 
 let userList = readUserList();
 

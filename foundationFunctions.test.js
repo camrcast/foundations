@@ -1,4 +1,4 @@
-const { queryUser } = require('./foundationDAO');
+const { queryUser } = require('./foundationDatabase');
 
 describe('Shopping List Functionality Tests', () => {
   test('should add an item to the shopping list', () => {
