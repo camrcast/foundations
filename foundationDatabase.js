@@ -1,4 +1,4 @@
-const { DynamoDBClient, QueryCommand, ScanCommand} = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, ScanCommand, UpdateItemCommand} = require("@aws-sdk/client-dynamodb");
 const {
     DynamoDBDocumentClient,
     PutCommand
@@ -21,7 +21,8 @@ async function queryUser(username){
     try{
         const data = await documentClient.send(command);
         return data.Items[0];
-    }catch(err){
+    }
+    catch(err){
         console.error(err);
         return false;
     }
@@ -35,45 +36,60 @@ async function sendTicket(ticket){
     try{
         const data = await documentClient.send(command);
         console.log(data);
-    }catch(err){
+    }
+    catch(err){
         console.error(err);
     }
 }
 
-async function scanTickets(username){
-    const command = new ScanCommand({
-        ticketTable,
-        FilterExpression: "#by = :by",
-        ExpressionAttributeNames: {
-            "#by": "by"
-        },
-        ExpressionAttributeValues: {
-            ":by": {S: username}
-        }
-    })
+async function scanTickets(user){
+    let command;
+    if (user.role === "Manager"){
+        command = new ScanCommand({
+            ticketTable,
+            FilterExpression: "#status = :status",
+            ExpressionAttributeNames: {
+                "#status": "status"
+            },
+            ExpressionAttributeValues: {
+                ":status": {S: "Pending"}
+            }
+        })
+    }
+    else{
+        command = new ScanCommand({
+            ticketTable,
+            FilterExpression: "#by = :by",
+            ExpressionAttributeNames: {
+                "#by": "by"
+            },
+            ExpressionAttributeValues: {
+                ":by": {S: username}
+            }
+        })
+    }
     try{
         const data = await documentClient.send(command);
-        return data.Items;
-    }catch(err){
+        
+    }
+    catch(err){
         console.error(err);
     }
 }
 
-async function scanPendingTickets(){
-    command = new ScanCommand({
+async function changeTicketStatus(id, status){
+    const command = new UpdateItemCommand({
         ticketTable,
-        FilterExpression: "#status = :status",
-        ExpressionAttributeNames: {
-            "#status": "status"
-        },
-        ExpressionAttributeValues: {
-            ":status": {S: "Pending"}
-        }
-    })
+        KeyConditionExpression: "#id = :id",
+        UpdateExpression: "set #status = :status",
+        ExpressionAttributeNames: { "#id": "id"},
+        ExpressionAttributeValues: { ":id": {S: id}, ":status": {S: status}}
+    });
     try{
         const data = await documentClient.send(command);
-        return data.Items;
-    }catch(err){
+        return data.Items[0];
+    }
+    catch(err){
         console.error(err);
     }
 }
@@ -102,5 +118,5 @@ module.exports = {
     queryUser,
     scanTickets,
     sendTicket,
-    scanPendingTickets
+    changeTicketStatus
 }

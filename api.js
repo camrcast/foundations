@@ -1,4 +1,4 @@
-const {registerUser, queryUser, scanTickets, sendTicket, scanPendingTickets} = require('./foundationDatabase');
+const {registerUser, queryUser, scanTickets, sendTicket, changeTicketStatus} = require('./foundationDatabase');
 const {authenticateToken, authenticateManagerToken} = require("./foundationAuth");
 const express = require("express");
 const jwt = require("jsonwebtoken");
@@ -56,13 +56,14 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get("/sendtickets", authenticateToken, (req, res) => {
-    const { by, desc, stat } = req.body;
+app.get("/sendticket", authenticateToken, (req, res) => {
+    const { by, desc } = req.body;
     by = req.user.username;
     if (!desc){
         res.status(401).json({message: "Invalid ticket"});
     }
-    sendTicket({by, desc, stat});
+    const ticket = {id: uuid.v4(), by, desc, "Pending"};
+    sendTicket(ticket);
     res.status(201).json({message: "Ticket created"});
 });
 
@@ -76,8 +77,20 @@ app.get("/checktickets", authenticateToken, (req, res) => {
     }
 });
 
-app.get("/pendingtickets", authenticateManagerToken, (req, res) => {
-    res.json({message : "Protected Route Accessed", user: req.user});
+app.get("/decideticket", authenticateManagerToken, (req, res) => {
+    const {id, status} = req.body;
+    if (status !== "Approved" || status !== "Denied"){
+        res.status(401).json({message: "Status must be Approved or Denied"});
+    }
+    else{
+        const data = changeTicketStatus(id, status);
+        if (!data){
+            res.status(401).json({message: "That ticket does not exist"});
+        }
+        else{
+            res.json({Tickets: JSON.parse(data)})
+        }
+    }
 });
 
 app.listen(PORT, () => {
