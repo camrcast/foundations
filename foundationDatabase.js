@@ -38,6 +38,7 @@ async function sendTicket(ticket){
     }
     catch(err){
         console.error(err);
+        return false;
     }
 }
 
@@ -63,7 +64,7 @@ async function scanTickets(user){
                 "#by": "by"
             },
             ExpressionAttributeValues: {
-                ":by": {S: username}
+                ":by": {S: user.username}
             }
         })
     }
@@ -73,6 +74,7 @@ async function scanTickets(user){
     }
     catch(err){
         console.error(err);
+        return false;
     }
 }
 
@@ -90,6 +92,7 @@ async function changeTicketStatus(id, status){
     }
     catch(err){
         console.error(err);
+        return false;
     }
 }
 

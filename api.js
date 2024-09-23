@@ -61,21 +61,25 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post("/sendticket", authenticateToken, (req, res) => {
-    const { by, desc } = req.body;
-    by = req.user.username;
+app.post("/sendticket", authenticateToken, async (req, res) => {
+    const desc = req.body;
+    const by = req.user.username.toLowerCase();
     if (!desc){
         res.status(401).json({message: "Invalid ticket"});
     }
     const ticket = {id: uuid.v4(), by, desc, status: "Pending"};
-    sendTicket(ticket);
-    res.status(201).json({message: "Ticket created"});
+    if (await sendTicket(ticket)){
+        res.status(201).json({message: "Ticket created"});
+    }
+    else{
+        res.status(500).json({message:"Error processing ticket"});
+    }
 });
 
-app.get("/checktickets", authenticateToken, (req, res) => {
-    const data = scanTickets(req.user);
-    if (data.size < 1){
-        res.status(401).json({message: "No tickets to display"});
+app.get("/checktickets", authenticateToken, async (req, res) => {
+    const data = await scanTickets(req.user);
+    if (!data){
+        res.status(404).json({message: "No tickets to display"});
     }
     else{
         res.json({Tickets: JSON.parse(data)})
@@ -90,7 +94,7 @@ app.post("/decideticket", authenticateManagerToken, async (req, res) => {
     else{
         const data = await changeTicketStatus(id, status);
         if (data.size < 1){
-            res.status(401).json({message: "That ticket does not exist"});
+            res.status(404).json({message: "That ticket does not exist"});
         }
         else{
             res.json({Tickets: JSON.parse(data)})
