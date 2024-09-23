@@ -1,7 +1,8 @@
-const { DynamoDBClient, QueryCommand, ScanCommand, UpdateItemCommand} = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, UpdateItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
 const {
     DynamoDBDocumentClient,
-    PutCommand
+    PutCommand,
+    GetCommand
 } = require("@aws-sdk/lib-dynamodb")
 
 const client = new DynamoDBClient({region: "us-west-1"});
@@ -12,15 +13,13 @@ const userTable = "foundationUsers";
 const ticketTable = "foundationTickets";
 
 async function queryUser(username){
-    const command = new QueryCommand({
-        userTable,
-        KeyConditionExpression: "#username = :username",
-        ExpressionAttributeNames: { "#username": "username"},
-        ExpressionAttributeValues: { ":username": {S: username}}
+    const command = new GetCommand({
+        TableName: userTable,
+        Key: {"username": username}
     });
     try{
         const data = await documentClient.send(command);
-        return data.Items[0];
+        return data.Item;
     }
     catch(err){
         console.error(err);
@@ -30,12 +29,12 @@ async function queryUser(username){
 
 async function sendTicket(ticket){
     const command = new PutCommand({
-        ticketTable,
+        TableName: ticketTable,
         ticket
     });
     try{
         const data = await documentClient.send(command);
-        console.log(data);
+        return data;
     }
     catch(err){
         console.error(err);
@@ -46,7 +45,7 @@ async function scanTickets(user){
     let command;
     if (user.role === "Manager"){
         command = new ScanCommand({
-            ticketTable,
+            TableName: ticketTable,
             FilterExpression: "#status = :status",
             ExpressionAttributeNames: {
                 "#status": "status"
@@ -58,7 +57,7 @@ async function scanTickets(user){
     }
     else{
         command = new ScanCommand({
-            ticketTable,
+            TableName: ticketTable,
             FilterExpression: "#by = :by",
             ExpressionAttributeNames: {
                 "#by": "by"
@@ -70,7 +69,7 @@ async function scanTickets(user){
     }
     try{
         const data = await documentClient.send(command);
-        
+        return data.Items;
     }
     catch(err){
         console.error(err);
@@ -79,7 +78,7 @@ async function scanTickets(user){
 
 async function changeTicketStatus(id, status){
     const command = new UpdateItemCommand({
-        ticketTable,
+        TableName: ticketTable,
         KeyConditionExpression: "#id = :id",
         UpdateExpression: "set #status = :status",
         ExpressionAttributeNames: { "#id": "id"},
@@ -96,16 +95,15 @@ async function changeTicketStatus(id, status){
 
 async function registerUser(user){
     const command = new PutCommand({
-        userTable,
-        user
+        TableName: userTable,
+        Item: {username: user.username, password: user.password, role: user.role}
     });
     try{
-        if (queryUser(user.username)){
+        if (queryUser(user.username) < 1){
             return false;
         }
         const data = await documentClient.send(command);
-        console.log(data);
-        return true;
+        return data;
     }
     catch(err){
         console.error(err);

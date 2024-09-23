@@ -34,7 +34,8 @@ async function authenticateManagerToken(req, res, next){
 async function decodeJWT(token){
     try{
         let key = "";
-        fs.readFile('key.txt', (data) => {
+        fs.readFile('./key.txt', (err, data) => {
+            if (err) throw err;
             key = data.toString();
         });
         const user = await jwt.verify(token, key)

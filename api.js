@@ -4,11 +4,17 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const uuid = require("uuid");
+const fs = require("fs");
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+let secretKey = "";
+fs.readFile('./key.txt', (err, data) => {
+    if (err) throw err;
+    secretKey = data.toString();
+});
 
 // secret key for JWT signing (make sure to make this more secure in some way)
 
@@ -21,13 +27,14 @@ app.post("/register", async (req, res) => {
     else{
         const saltRounds = 10;
         password = await bcrypt.hash(password, saltRounds);
-        console.log(password);
-        const newUser = { id: uuid.v4(), username, password, role};
-        if (registerUser(newUser)){
+        const newUser = { username: username.toLowerCase(), password, role};
+        console.log(newUser);
+        let x = await registerUser(newUser);
+        if (x){
             res.status(201).json({message: "User successfully registered"});
         }
         else{
-            res.status(409).json({message: "That username is taken"});
+            res.status(409).json({message: x});
         }
     }
 });
@@ -35,8 +42,9 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
     // find the user in the database
-    const user = queryUser(username);
-    if (!user || !(await bcrypt.compare(password, user.password))){
+    const user = await queryUser(username.toLowerCase());
+    console.log(user);
+    if (user.size < 1 || !(await bcrypt.compare(password, user.password))){
         res.status(401).json({message: "Invalid username or password"});
     }
     else{
@@ -49,20 +57,20 @@ app.post("/login", async (req, res) => {
             },
             secretKey,
             {
-                expiresIn: "60m", // token expiration time (adjust as needed)
+                expiresIn: "20m", // token expiration time (adjust as needed)
             }
         );
         res.json({token});
     }
 });
 
-app.get("/sendticket", authenticateToken, (req, res) => {
+app.post("/sendticket", authenticateToken, (req, res) => {
     const { by, desc } = req.body;
     by = req.user.username;
     if (!desc){
         res.status(401).json({message: "Invalid ticket"});
     }
-    const ticket = {id: uuid.v4(), by, desc, "Pending"};
+    const ticket = {id: uuid.v4(), by, desc, status: "Pending"};
     sendTicket(ticket);
     res.status(201).json({message: "Ticket created"});
 });
@@ -77,13 +85,13 @@ app.get("/checktickets", authenticateToken, (req, res) => {
     }
 });
 
-app.get("/decideticket", authenticateManagerToken, (req, res) => {
+app.post("/decideticket", authenticateManagerToken, async (req, res) => {
     const {id, status} = req.body;
     if (status !== "Approved" || status !== "Denied"){
         res.status(401).json({message: "Status must be Approved or Denied"});
     }
     else{
-        const data = changeTicketStatus(id, status);
+        const data = await changeTicketStatus(id, status);
         if (!data){
             res.status(401).json({message: "That ticket does not exist"});
         }
