@@ -1,4 +1,4 @@
-const { DynamoDBClient, QueryCommand, UpdateItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, UpdateItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
 const {
     DynamoDBDocumentClient,
     PutCommand,
@@ -42,32 +42,38 @@ async function sendTicket(ticket){
     }
 }
 
-async function scanTickets(user){
-    let command;
-    if (user.role === "Manager"){
-        command = new ScanCommand({
-            TableName: ticketTable,
-            FilterExpression: "#status = :status",
-            ExpressionAttributeNames: {
-                "#status": "status"
-            },
-            ExpressionAttributeValues: {
-                ":status": {S: "Pending"}
-            }
-        })
+async function scanTicketsE(username){
+    const command = new ScanCommand({
+        TableName: ticketTable,
+        FilterExpression: "#by = :by",
+        ExpressionAttributeNames: {
+            "#by": "by"
+        },
+        ExpressionAttributeValues: {
+            ":by": {S: username}
+        }
+    })
+    try{
+        const data = await documentClient.send(command);
+        return data.Items;
     }
-    else{
-        command = new ScanCommand({
-            TableName: ticketTable,
-            FilterExpression: "#by = :by",
-            ExpressionAttributeNames: {
-                "#by": "by"
-            },
-            ExpressionAttributeValues: {
-                ":by": {S: user.username}
-            }
-        })
+    catch(err){
+        console.error(err);
+        return false;
     }
+}
+
+async function scanTicketsM(){
+    const command = new ScanCommand({
+        TableName: ticketTable,
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":status": {S: "Pending"}
+        }
+    })
     try{
         const data = await documentClient.send(command);
         return data.Items;
@@ -102,9 +108,6 @@ async function registerUser(user){
         Item: {username: user.username, password: user.password, role: user.role}
     });
     try{
-        if (await queryUser(user.username)){
-            return false;
-        }
         const data = await documentClient.send(command);
         return data;
     }
@@ -117,7 +120,8 @@ async function registerUser(user){
 module.exports = {
     registerUser,
     queryUser,
-    scanTickets,
+    scanTicketsE,
+    scanTicketsM,
     sendTicket,
     changeTicketStatus
 }
