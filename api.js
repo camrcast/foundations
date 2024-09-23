@@ -28,13 +28,11 @@ app.post("/register", async (req, res) => {
         const saltRounds = 10;
         password = await bcrypt.hash(password, saltRounds);
         const newUser = { username: username.toLowerCase(), password, role};
-        console.log(newUser);
-        let x = await registerUser(newUser);
-        if (x){
+        if (await registerUser(newUser)){
             res.status(201).json({message: "User successfully registered"});
         }
         else{
-            res.status(409).json({message: x});
+            res.status(409).json({message: "That username is taken"});
         }
     }
 });
@@ -43,8 +41,7 @@ app.post("/login", async (req, res) => {
     const { username, password } = req.body;
     // find the user in the database
     const user = await queryUser(username.toLowerCase());
-    console.log(user);
-    if (user.size < 1 || !(await bcrypt.compare(password, user.password))){
+    if (!user || !(await bcrypt.compare(password, user.password))){
         res.status(401).json({message: "Invalid username or password"});
     }
     else{
@@ -77,7 +74,7 @@ app.post("/sendticket", authenticateToken, (req, res) => {
 
 app.get("/checktickets", authenticateToken, (req, res) => {
     const data = scanTickets(req.user);
-    if (!data){
+    if (data.size < 1){
         res.status(401).json({message: "No tickets to display"});
     }
     else{
@@ -92,7 +89,7 @@ app.post("/decideticket", authenticateManagerToken, async (req, res) => {
     }
     else{
         const data = await changeTicketStatus(id, status);
-        if (!data){
+        if (data.size < 1){
             res.status(401).json({message: "That ticket does not exist"});
         }
         else{

@@ -30,7 +30,7 @@ async function queryUser(username){
 async function sendTicket(ticket){
     const command = new PutCommand({
         TableName: ticketTable,
-        ticket
+        Item: {id: ticket.id, by: ticket.by, desc: ticket.desc, status: ticket.status}
     });
     try{
         const data = await documentClient.send(command);
@@ -99,7 +99,7 @@ async function registerUser(user){
         Item: {username: user.username, password: user.password, role: user.role}
     });
     try{
-        if (queryUser(user.username) < 1){
+        if (await queryUser(user.username)){
             return false;
         }
         const data = await documentClient.send(command);
