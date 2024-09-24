@@ -1,8 +1,17 @@
-const { queryUser } = require('./foundationDatabase');
+const {validateReg, validateLogin, authenticateToken, authenticateManagerToken, createToken, processTicket, validateStatus, getTickets} = require("./foundationLogic");
 
-describe('Shopping List Functionality Tests', () => {
-  test('should add an item to the shopping list', () => {
-    const response = addItem('Bread', 1.99);
-    expect(response).toBe('Bread has been added to the shopping list');
+describe('Logic Tests', () => {
+  beforeEach(() => {
+    validateReg.mockClear();
+  });
+
+  test('should add to database', () => {
+    const username = "Hello";
+    const password = "world";
+    const role = "Employee";
+    
+    validateReg(username, password, role);
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith(filePath, JSON.stringify(shoppingList, null, 2));
   });
 });
