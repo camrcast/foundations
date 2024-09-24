@@ -61,11 +61,11 @@ async function getTickets(user){
 }
 
 async function validateStatus(id, status){
-    if (status !== "Approved" || status !== "Denied"){
+    if (status !== "Approved" && status !== "Denied"){
         return 0;
     }
     const data = await changeTicketStatus(id, status);
-    if (data.size < 1){
+    if (!data){
         return 1;
     }
     return 2;

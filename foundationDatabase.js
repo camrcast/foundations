@@ -2,7 +2,7 @@ const { DynamoDBClient, UpdateItemCommand, ScanCommand } = require("@aws-sdk/cli
 const {
     DynamoDBDocumentClient,
     PutCommand,
-    GetCommand
+    GetCommand,
 } = require("@aws-sdk/lib-dynamodb")
 
 const client = new DynamoDBClient({region: "us-west-1"});
@@ -30,7 +30,7 @@ async function queryUser(username){
 async function sendTicket(ticket){
     const command = new PutCommand({
         TableName: ticketTable,
-        Item: {id: ticket.id, by: ticket.by, desc: ticket.desc, status: ticket.status}
+        Item: {id: ticket.id, by: ticket.by, desc: ticket.desc, stat: ticket.status}
     });
     try{
         const data = await documentClient.send(command);
@@ -66,12 +66,12 @@ async function scanTicketsE(username){
 async function scanTicketsM(){
     const command = new ScanCommand({
         TableName: ticketTable,
-        FilterExpression: "#status = :status",
+        FilterExpression: "#stat = :stat",
         ExpressionAttributeNames: {
-            "#status": "status"
+            "#stat": "stat"
         },
         ExpressionAttributeValues: {
-            ":status": {S: "Pending"}
+            ":stat": {S: "Pending"}
         }
     })
     try{
@@ -84,17 +84,17 @@ async function scanTicketsM(){
     }
 }
 
-async function changeTicketStatus(id, status){
+async function changeTicketStatus(byid, newstatus){
     const command = new UpdateItemCommand({
         TableName: ticketTable,
-        KeyConditionExpression: "#id = :id",
-        UpdateExpression: "set #status = :status",
-        ExpressionAttributeNames: { "#id": "id"},
-        ExpressionAttributeValues: { ":id": {S: id}, ":status": {S: status}}
+        Key: {"id": {S: byid}},
+        ExpressionAttributeValues: { ":newstatus": {S: newstatus}},
+        UpdateExpression: "SET stat = :newstatus",
+        ReturnValues: "UPDATED_NEW"
     });
     try{
         const data = await documentClient.send(command);
-        return data.Items[0];
+        return true;
     }
     catch(err){
         console.error(err);

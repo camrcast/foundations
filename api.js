@@ -74,7 +74,7 @@ app.post("/decideticket", authenticateManagerToken, async (req, res) => {
         res.status(404).json({message: "That ticket does not exist"});
     }
     else{
-        res.status(200).json({Tickets: JSON.parse(data)});
+        res.status(200).json({message: "Ticket successfully updated to "+status});
     }
 });
 
