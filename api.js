@@ -11,14 +11,14 @@ app.use(express.json());
 
 app.post("/register", async (req, res) => {
     const {username, password, role} = req.body;
-    let data = await createNewUser(username, password, role);
+    const data = await createNewUser(username, password, role);
     if (!data){
         res.status(401).json({message: "Invalid username or password"});
     }
     else if (await queryUser(username)){
         res.status(409).json({message: "That username is taken"});
     }
-    else if (await registerUser(newUser)){
+    else if (await registerUser(data)){
         res.status(201).json({message: "User successfully registered"});
     }
     else{
@@ -58,7 +58,8 @@ app.post("/sendticket", authenticateToken, async (req, res) => {
 });
 
 app.get("/checktickets", authenticateToken, async (req, res) => {
-    const tickets = (req.user.role === "Manager") ? await scanTicketsM() : await scanTicketsE(req.user.username);
+    const check = checkRole(req.user.role);
+    const tickets = check ? await scanTicketsM() : await scanTicketsE(req.user.username)
     res.status(200).json({Tickets: tickets});
 });
 

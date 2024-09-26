@@ -17,10 +17,10 @@ async function createNewUser(username, password, role){
     }
     const saltRounds = 10;
     password = await bcrypt.hash(password, saltRounds);
-    const newUser = { username: username.toLowerCase(), password, role};
-    return true;
+    return { username: username.toLowerCase(), password, role};
 }
 
+//Most of the following are here for testing sake
 async function validateLogin(username, password, password2){
     return (!username || !(await bcrypt.compare(password, password2)));
 }
@@ -31,6 +31,10 @@ async function processTicket(desc, by){
 
 async function validateStatus(status){
     return (status !== "Approved" && status !== "Denied");
+}
+
+async function checkRole(role){
+    return (role === "Manager");
 }
 
 async function createToken(user){
@@ -48,15 +52,13 @@ async function createToken(user){
 }
 
 async function authenticateToken(req, res, next){
-    // authorization: "Bearer tokenstring"
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
     if (!token){
-        res.status(401).json({message: "Unauthorized access"});
+        res.status(401).json({message: "You must sign in first"});
     }
     else{
-        const user = await decodeJWT(token);
-        req.user = user;
+        req.user = await decodeJWT(token);
         next();
     }
 }
@@ -65,7 +67,7 @@ async function authenticateManagerToken(req, res, next){
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
     if (!token){
-        res.status(401).json({message: "Unauthorized access"});
+        res.status(401).json({message: "You must sign in first"});
     }
     else{
         const user = await decodeJWT(token);
@@ -94,5 +96,6 @@ module.exports = {
     authenticateToken,
     createToken,
     processTicket,
-    validateStatus
+    validateStatus,
+    checkRole
 }
