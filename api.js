@@ -9,7 +9,7 @@ app.use(express.json());
 
 // secret key for JWT signing (make sure to make this more secure in some way)
 
-app.post("/register", async (req, res) => {
+app.post("/registerpage", async (req, res) => {
     const {username, password, role} = req.body;
     const data = await createNewUser(username, password, role);
     if (!data){
@@ -26,7 +26,7 @@ app.post("/register", async (req, res) => {
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/loginpage", async (req, res) => {
     const { username, password } = req.body;
     // find the user in the database
     const user = await queryUser(username.toLowerCase());
@@ -41,7 +41,7 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post("/sendticket", authenticateToken, async (req, res) => {
+app.post("/sendticketpage", authenticateToken, async (req, res) => {
     const { desc } = req.body;
     const by = req.user.username.toLowerCase();
     const ticket = await processTicket(desc, by);
@@ -57,13 +57,13 @@ app.post("/sendticket", authenticateToken, async (req, res) => {
     }
 });
 
-app.get("/checktickets", authenticateToken, async (req, res) => {
+app.get("/checkticketspage", authenticateToken, async (req, res) => {
     const check = checkRole(req.user.role);
     const tickets = check ? await scanTicketsM() : await scanTicketsE(req.user.username)
     res.status(200).json({Tickets: tickets});
 });
 
-app.post("/decideticket", authenticateManagerToken, async (req, res) => {
+app.post("/decideticketpage", authenticateManagerToken, async (req, res) => {
     const {id, status} = req.body;
     const data = await validateStatus(status);
     if (data){
