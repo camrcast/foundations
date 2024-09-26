@@ -71,7 +71,7 @@ async function authenticateManagerToken(req, res, next){
     }
     else{
         const user = await decodeJWT(token);
-        if (user.role !== "Manager"){
+        if (!user || user.role !== "Manager"){
             res.status(403).json({message: "Manager only access"});
             return;
         }
