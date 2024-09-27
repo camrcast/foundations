@@ -53,12 +53,14 @@ app.post("/sendticketpage", authenticateTokenEmployee, async (req, res) => {
     if (!ticket){
         res.status(401).json({message: "Invalid ticket"});
     }
-    const data = await sendTicket(ticket);
-    if (data){
-        res.status(201).json({message: "Ticket created"});
-    }
     else{
-        res.status(500).json({message:"Error processing ticket"});
+        const data = await sendTicket(ticket);
+        if (data){
+            res.status(201).json({message: "Ticket created"});
+        }
+        else{
+            res.status(500).json({message:"Error processing ticket"});
+        }
     }
 });
 
