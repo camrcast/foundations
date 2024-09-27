@@ -26,7 +26,7 @@ async function validateLogin(username, password, password2){
 }
 
 async function processTicket(desc, by, price){
-    return (!desc || price <= 0) ? false : {id: uuid.v4(), by, desc, status: "Pending"};
+    return (!desc || price <= 0) ? false : {id: uuid.v4(), by, desc, price, status: "Pending"};
 }
 
 async function validateStatus(status){

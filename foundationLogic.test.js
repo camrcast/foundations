@@ -53,9 +53,9 @@ describe('validateLogin test', () => {
 
 //processTicket
 describe('processTicket test', () => {
-  it('Tom gets parking fee', async () => {
-    const response = await processTicket("Parking fee", "Tom");
-    expect(response).toEqual({id: expect.anything(), by: "Tom", desc: "Parking fee", status: "Pending"});
+  it('Tom gets parking fee of $10', async () => {
+    const response = await processTicket("Parking fee", "Tom", "10");
+    expect(response).toEqual({id: expect.anything(), by: "Tom", desc: "Parking fee", price: "10", status: "Pending"});
   });
 });
 

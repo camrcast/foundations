@@ -45,7 +45,7 @@ async function queryTicket(id){
 async function sendTicket(ticket){
     const command = new PutCommand({
         TableName: ticketTable,
-        Item: {id: ticket.id, by: ticket.by, desc: ticket.desc, stat: ticket.status}
+        Item: {id: ticket.id, by: ticket.by, desc: ticket.desc, price: ticket.price, stat: ticket.status}
     });
     try{
         const data = await documentClient.send(command);
