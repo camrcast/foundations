@@ -25,8 +25,8 @@ async function validateLogin(username, password, password2){
     return (!username || !(await bcrypt.compare(password, password2)));
 }
 
-async function processTicket(desc, by){
-    return (!desc) ? false : {id: uuid.v4(), by, desc, status: "Pending"};
+async function processTicket(desc, by, price){
+    return (!desc || price <= 0) ? false : {id: uuid.v4(), by, desc, status: "Pending"};
 }
 
 async function validateStatus(status){

@@ -47,9 +47,9 @@ app.post("/loginpage", async (req, res) => {
 });
 
 app.post("/sendticketpage", authenticateTokenEmployee, async (req, res) => {
-    const { desc } = req.body;
+    const { price, desc } = req.body;
     const by = req.user.username.toLowerCase();
-    const ticket = await processTicket(desc, by);
+    const ticket = await processTicket(desc, by, price);
     if (!ticket){
         res.status(401).json({message: "Invalid ticket"});
     }
