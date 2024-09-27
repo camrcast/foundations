@@ -63,8 +63,8 @@ app.post("/sendticketpage", authenticateToken, async (req, res) => {
 });
 
 app.get("/checkticketspage", authenticateToken, async (req, res) => {
-    const check = checkRole(req.user.role);
-    const tickets = check ? await scanTicketsM() : await scanTicketsE(req.user.username)
+    const check = await checkRole(req.user.role);
+    const tickets = check ? await scanTicketsM() : await scanTicketsE(req.user.username);
     res.status(200).json({Tickets: tickets});
 });
 
