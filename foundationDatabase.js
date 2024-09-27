@@ -27,6 +27,21 @@ async function queryUser(username){
     }
 }
 
+async function queryTicket(id){
+    const command = new GetCommand({
+        TableName: ticketTable,
+        Key: {"id": id}
+    });
+    try{
+        const data = await documentClient.send(command);
+        return data.Item;
+    }
+    catch(err){
+        console.error(err);
+        return false;
+    }
+}
+
 async function sendTicket(ticket){
     const command = new PutCommand({
         TableName: ticketTable,
@@ -94,7 +109,7 @@ async function changeTicketStatus(byid, newstatus){
     });
     try{
         const data = await documentClient.send(command);
-        return true;
+        return data;
     }
     catch(err){
         console.error(err);
@@ -123,5 +138,6 @@ module.exports = {
     scanTicketsE,
     scanTicketsM,
     sendTicket,
-    changeTicketStatus
+    changeTicketStatus,
+    queryTicket
 }

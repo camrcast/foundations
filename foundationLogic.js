@@ -80,6 +80,23 @@ async function authenticateManagerToken(req, res, next){
     }
 }
 
+async function authenticateTokenEmployee(req, res, next){
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token){
+        res.status(401).json({message: "You must sign in first"});
+    }
+    else{
+        const user = await decodeJWT(token);
+        if (!user || user.role === "Manager"){
+            res.status(403).json({message: "Employee only access"});
+            return;
+        }
+        req.user = user;
+        next();
+    }
+}
+
 async function decodeJWT(token){
     try{
         const user = jwt.verify(token, key)
@@ -97,5 +114,6 @@ module.exports = {
     createToken,
     processTicket,
     validateStatus,
-    checkRole
+    checkRole,
+    authenticateTokenEmployee
 }

@@ -1,5 +1,5 @@
-const {createNewUser, validateLogin, authenticateToken, authenticateManagerToken, createToken, processTicket, validateStatus, checkRole} = require("./foundationLogic");
-const {registerUser, queryUser, scanTicketsE, scanTicketsM, sendTicket, changeTicketStatus} = require('./foundationDatabase');
+const {createNewUser, validateLogin, authenticateToken, authenticateManagerToken, authenticateTokenEmployee, createToken, processTicket, validateStatus, checkRole} = require("./foundationLogic");
+const {registerUser, queryUser, scanTicketsE, scanTicketsM, sendTicket, queryTicket, changeTicketStatus} = require('./foundationDatabase');
 const express = require("express");
 
 const app = express();
@@ -46,7 +46,7 @@ app.post("/loginpage", async (req, res) => {
     }
 });
 
-app.post("/sendticketpage", authenticateToken, async (req, res) => {
+app.post("/sendticketpage", authenticateTokenEmployee, async (req, res) => {
     const { desc } = req.body;
     const by = req.user.username.toLowerCase();
     const ticket = await processTicket(desc, by);
@@ -75,12 +75,18 @@ app.post("/decideticketpage", authenticateManagerToken, async (req, res) => {
         res.status(401).json({message: "Status must be Approved or Denied"});
     }
     else{
-        const upd = await changeTicketStatus(id, status);
-        if (!upd){
+        const check = await queryTicket(id);
+        if (!check){
             res.status(404).json({message: "That ticket does not exist"});
         }
         else{
-            res.status(200).json({message: "Ticket successfully updated to "+status});
+            const upd = await changeTicketStatus(id, status);
+            if (!upd){
+                res.status(500).json({message: "Error changing ticket status"});
+            }
+            else{
+                res.status(200).json({message: "Ticket successfully updated to "+status});
+            }
         }
     }
 });
