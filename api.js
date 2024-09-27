@@ -19,7 +19,7 @@ app.post("/registerpage", async (req, res) => {
         res.status(409).json({message: "That username is taken"});
     }
     else if (await registerUser(data)){
-        res.status(201).json({message: "User successfully registered"});
+        res.status(201).json({message: "User successfully registered as ", username, role: data.role});
     }
     else{
         res.status(500).json({message: "Failed to register user"});
