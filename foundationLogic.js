@@ -45,7 +45,7 @@ async function createToken(user){
         },
         key,
         {
-            expiresIn: "20m",
+            expiresIn: "50m",
         }
     );
     return token;
