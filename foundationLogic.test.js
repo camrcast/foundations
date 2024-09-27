@@ -60,8 +60,8 @@ describe('processTicket test', () => {
 });
 
 describe('processTicket test', () => {
-  it('Tom did not enter any description', async () => {
-    const response = await processTicket("", "Tom");
+  it('Tom did not enter any description or price', async () => {
+    const response = await processTicket("", "Tom", "");
     expect(response).toEqual(false);
   });
 });
