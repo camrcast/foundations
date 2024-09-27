@@ -30,14 +30,19 @@ app.post("/loginpage", async (req, res) => {
     const { username, password } = req.body;
     // find the user in the database
     const user = await queryUser(username.toLowerCase());
-    const data = await validateLogin(username.toLowerCase(), password, user.password);
-    if (data){
-        res.status(401).json({message: "Invalid username or password"});
+    if (!user){
+        res.status(401).json({message: "That user does not exist"});
     }
     else{
-        // generate the JWT token
-        const token = await createToken(user);
-        res.status(200).json({token});
+        const data = await validateLogin(username.toLowerCase(), password, user.password);
+        if (data){
+            res.status(401).json({message: "Invalid username or password"});
+        }
+        else{
+            // generate the JWT token
+            const token = await createToken(user);
+            res.status(200).json({token});
+        }
     }
 });
 
