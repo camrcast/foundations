@@ -36,7 +36,7 @@ app.post("/loginpage", async (req, res) => {
     else{
         const data = await validateLogin(username.toLowerCase(), password, user.password);
         if (data){
-            res.status(401).json({message: "Invalid username or password"});
+            res.status(401).json({message: "Invalid password"});
         }
         else{
             // generate the JWT token
